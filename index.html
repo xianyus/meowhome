@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MeowHome | 貓咪領養平台</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #fdfaf6;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header,
+    footer {
+      background-color: #fff3e0;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav a {
+      margin: 0 1rem;
+      text-decoration: none;
+      color: #5d4037;
+      font-weight: bold;
+    }
+    main {
+      padding: 2rem;
+    }
+    .cat-card {
+      background: #ffffff;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    a.apply-button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #ff8c00;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    a.apply-button:hover {
+      background-color: #e67e00;
+    }
+    #apply p.description {
+      margin-top: 0.5rem;
+      color: #666;
+    }
+    .logo {
+      max-width: 180px;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="MeowHome Logo" class="logo" />
+    <h1>MeowHome</h1>
+    <p>讓更多毛孩被看見、被愛。</p>
+    <nav>
+      <a href="#cats">待領養貓咪</a>
+      <a href="#apply">領養申請</a>
+      <a href="#about">關於我們</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="cats">
+      <h2>待領養貓咪</h2>
+      <div class="cat-card">
+        <h3>麻糬</h3>
+        <p>性別：男</p>
+        <p>年齡：2歲</p>
+        <p>個性：活潑</p>
+        <p>（此為示意，實際照片尚未提供）</p>
+      </div>
+    </section>
+
+    <section id="apply">
+      <h2>領養申請</h2>
+      <p>請點擊下方按鈕，填寫領養申請表：</p>
+      <a
+        href="https://docs.google.com/forms/d/e/1FAIpQLSfEg03QDP_4u_tD0vnfZJ7F6RebjB52RmdhBWzFDzXaiWiYNg/viewform?usp=sf_link"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="apply-button"
+        >填寫領養申請表</a
+      >
+      <p class="description">
+        感謝您願意給毛孩一個家，我們會盡快與您聯繫。
+      </p>
+    </section>
+
+    <section id="about">
+      <h2>關於我們</h2>
+      <p>
+        我是一名貓咪中途，專注幫助街頭貓找到溫暖的家。希望透過這個網站讓更多毛孩被看見、被愛。
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 MeowHome. All rights reserved.</p>
+  </footer>
+</body>
+</html>
