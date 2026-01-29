@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>神諭之書 - AI 終極版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <style>
+        :root {
+            --bg: #0f172a; --card-bg: #1e293b; --border: #334155; --accent: #38bdf8;
+            --danger: #f87171; --success: #4ade80; --text: #f1f5f9; --text-muted: #94a3b8; --warning: #fbbf24;
+            --hp: #f87171; --mp: #60a5fa; --sp: #34d399;
+        }
+        body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 10px; line-height: 1.5; }
+        .app { max-width: 800px; margin: auto; padding-bottom: 80px; }
+        .section-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        h3 { font-size: 1rem; color: var(--accent); margin: 0 0 12px 0; border-left: 4px solid var(--accent); padding-left: 8px; }
+        .bar-bg { width: 100%; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; margin: 4px 0 12px; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease; }
+        .hp-fill { background: var(--hp); } .mp-fill { background: var(--mp); } .sp-fill { background: var(--sp); }
+        .grid-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        input, textarea { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 14px; }
+        label { font-size: 11px; color: var(--accent); font-weight: bold; display: block; margin-bottom: 4px; }
+        
+        /* AI 對話框 */
+        .ai-chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; font-size: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .chat-win { position: fixed; bottom: 90px; right: 20px; width: 320px; height: 450px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 15px; display: none; flex-direction: column; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        .chat-win.active { display: flex; }
+        .chat-head { background: var(--accent); color: #000; padding: 12px; font-weight: bold; display: flex; justify-content: space-between; border-radius: 15px 15px 0 0; }
+        .chat-msgs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #0f172a; }
+        .msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 14px; line-height: 1.4; }
+        .msg.ai { background: var(--card-bg); color: var(--text); align-self: flex-start; border: 1px solid var(--border); }
+        .msg.user { background: var(--accent); color: #000; align-self: flex-end; }
+        .chat-loading { display: none; font-size: 12px; color: var(--warning); padding: 5px 15px; }
+        button { background: var(--accent); border: none; color: #000; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="section-card">
+        <h3>👤 角色屬性</h3>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <div style="flex:1"><label>姓名</label><input type="text" id="name" value="米洛"></div>
+            <div style="flex:0.5"><label>等級</label><input type="number" id="lv" value="1"></div>
+        </div>
+        <div class="grid-stats">
+            <div><label>HP (當前)</label><input type="number" id="hp" value="120"></div>
+            <div><label>MP (當前)</label><input type="number" id="mp" value="60"></div>
+            <div><label>SP (當前)</label><input type="number" id="sp" value="60"></div>
+        </div>
+        <div class="bar-bg"><div id="hpBar" class="bar-fill hp-fill" style="width: 100%"></div></div>
+        <div class="bar-bg"><div id="mpBar" class="bar-fill mp-fill" style="width: 100%"></div></div>
+    </div>
+
+    <div class="section-card">
+        <h3>🌍 世界設定</h3>
+        <textarea id="world" rows="5" placeholder="描述你目前在哪裡...">在一個霧氣濃厚的森林入口。</textarea>
+    </div>
+</div>
+
+<div class="ai-chat-btn" onclick="toggleChat()">🎲</div>
+<div id="chatWin" class="chat-win">
+    <div class="chat-head"><span>📜 劇情導航員</span><span onclick="toggleChat()" style="cursor:pointer;">×</span></div>
+    <div id="chatMsgs" class="chat-msgs">
+        <div class="msg ai">你好，冒險者。準備好開始你的旅程了嗎？</div>
+    </div>
+    <div id="chatLoading" class="chat-loading">AI 撰寫劇情中...</div>
+    <div style="padding:10px; display:flex; gap:5px; background: var(--card-bg);">
+        <input type="text" id="chatInput" placeholder="輸入行動..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button onclick="sendChat()">發送</button>
+    </div>
+</div>
+
+<script>
+    const API_KEY = "AIzaSyB2v_uPQOH-z0_xe8WdFm45B_gUtn7rvRI";
+
+    function toggleChat() { document.getElementById('chatWin').classList.toggle('active'); }
+
+    async function sendChat() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if(!text) return;
+
+        appendMsg('user', text);
+        input.value = '';
+        document.getElementById('chatLoading').style.display = 'block';
+
+        const name = document.getElementById('name').value;
+        const lv = document.getElementById('lv').value;
+        const world = document.getElementById('world').value;
+
+        const prompt = `你是一位 RPG 主持人。當前玩家：${name} (Lv.${lv})。背景：${world}。玩家行動：${text}。請描述劇情結果。`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const data = await res.json();
+            const aiResponse = data.candidates[0].content.parts[0].text;
+            appendMsg('ai', aiResponse);
+        } catch (e) {
+            appendMsg('ai', "❌ 連線失敗，請檢查 API Key 或網路。");
+        } finally {
+            document.getElementById('chatLoading').style.display = 'none';
+        }
+    }
+
+    function appendMsg(role, text) {
+        const box = document.getElementById('chatMsgs');
+        const div = document.createElement('div');
+        div.className = `msg ${role}`;
+        div.textContent = text;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+</body>
+</html>
