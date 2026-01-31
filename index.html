@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>神諭之書 - 終極自動化終端</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <script src="ai-config.js"></script>
+    <style id="theme-style">
+        :root {
+            --bg: #0f172a; --card-bg: #1e293b; --border: #334155; --accent: #38bdf8;
+            --danger: #f87171; --success: #4ade80; --text: #f1f5f9; --text-muted: #94a3b8; --warning: #fbbf24;
+            --hp: #f87171; --mp: #60a5fa; --sp: #34d399;
+        }
+    </style>
+    <style>
+        body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 10px; line-height: 1.5; transition: background 0.3s; }
+        .app { max-width: 900px; margin: auto; }
+        
+        .section-card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border); 
+            border-radius: 12px; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        
+        h3 { font-size: 1rem; color: var(--accent); margin: 0 0 12px 0; border-left: 4px solid var(--accent); padding-left: 8px; }
+
+        .bar-bg { width: 100%; height: 6px; background: rgba(0,0,0,0.3); border-radius: 3px; overflow: hidden; margin: 4px 0 10px; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease; }
+        .hp-fill { background: var(--hp); } .mp-fill { background: var(--mp); } .sp-fill { background: var(--sp); } .exp-fill { background: var(--warning); }
+
+        .status-grid { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 8px; 
+            background: rgba(0,0,0,0.2); 
+            padding: 10px; 
+            border-radius: 8px;
+        }
+        .status-item { font-size: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; color: var(--text-muted); }
+        .status-item input { margin-bottom: 4px; transform: scale(1.1); }
+
+        .header-area { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .name-box { flex: 1; min-width: 200px; }
+        .name-row { display: flex; align-items: center; gap: 10px; }
+        #status-emojis { font-size: 1.2rem; }
+
+        .tabs { display: flex; gap: 4px; margin-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .tab { flex: 1; text-align: center; padding: 10px 5px; cursor: pointer; color: var(--text-muted); font-size: 14px; }
+        .tab.active { background: var(--accent); color: white; border-radius: 8px 8px 0 0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* AI 聊天室排版修正 */
+        #ai-chat-box { height: 450px; overflow-y: auto; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 12px; }
+        .ai-msg { background: #2d3748; padding: 12px; border-radius: 0 12px 12px 12px; align-self: flex-start; max-width: 85%; border-left: 4px solid var(--success); font-size: 14px; white-space: pre-wrap; position: relative; }
+        .user-msg { background: var(--accent); color: #000; padding: 12px; border-radius: 12px 12px 0 12px; align-self: flex-end; max-width: 85%; font-size: 14px; font-weight: 500; position: relative; }
+        .resend-btn { position: absolute; bottom: -20px; right: 0; font-size: 10px; color: var(--accent); cursor: pointer; background: none; border: none; padding: 0; }
+
+        .sub-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 15px; background: rgba(0,0,0,0.1); border-radius: 8px 8px 0 0; }
+        .sub-tab { padding: 10px 20px; cursor: pointer; font-size: 14px; color: var(--text-muted); }
+        .sub-tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); font-weight: bold; }
+
+        .grid-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        
+        input, textarea, select { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 10px; box-sizing: border-box; font-size: 16px; }
+        label { font-size: 11px; color: var(--accent); font-weight: bold; margin-bottom: 4px; display: block; }
+
+        .list-item { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border); }
+        button { border-radius: 8px; padding: 10px; cursor: pointer; border: 1px solid var(--accent); color: var(--accent); background: transparent; font-size: 14px; transition: 0.2s; }
+        button:active { transform: scale(0.95); opacity: 0.8; }
+        .btn-full { width: 100%; margin-top: 10px; }
+        .btn-max { background: var(--accent); color: #000; font-weight: bold; border: none; padding: 4px 10px; font-size: 11px; border-radius: 4px; }
+        .btn-danger { border-color: var(--danger); color: var(--danger); }
+        .btn-success { border-color: var(--success); color: var(--success); }
+
+        .theme-picker { display: flex; gap: 10px; margin-top: 10px; }
+        .theme-dot { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; }
+
+        @keyframes saved-glow {
+            0% { box-shadow: 0 0 0px var(--success); }
+            50% { box-shadow: 0 0 15px var(--success); }
+            100% { box-shadow: 0 0 0px var(--success); }
+        }
+        .save-active { animation: saved-glow 1s ease; border-color: var(--success) !important; color: var(--success) !important; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="section-card" style="padding: 10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <select id="charSelect" onchange="switchCharacter(this.value)" style="flex:1;"></select>
+            <button onclick="addNewCharacter()" style="margin-left:10px; white-space:nowrap;">＋新角色</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('chars')">角色資訊</div>
+        <div class="tab" onclick="showTab('world')">世界設定</div>
+        <div class="tab" onclick="showTab('ai')">AI GM 對話</div>
+        <div class="tab" onclick="showTab('tools')">管理工具</div>
+    </div>
+
+    <div id="content-chars" class="tab-content active">
+        <div class="section-card">
+            <div class="header-area">
+                <div style="width: 80px; height: 80px; border: 1px solid var(--border); border-radius: 8px; background: #000; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;" onclick="document.getElementById('avatarInput').click()">
+                    <img id="charAvatar" style="display:none; width:100%; height:100%; object-fit:cover;">
+                    <span id="avatarHint" style="font-size:10px;">頭像</span>
+                </div>
+                <input type="file" id="avatarInput" hidden onchange="uploadAvatar(this)">
+                <div class="name-box">
+                    <div class="name-row">
+                        <div id="displayName" style="font-size:1.2rem; font-weight:bold; color:var(--accent);">角色名</div>
+                        <div id="status-emojis"></div>
+                    </div>
+                    <input data-f="name" oninput="updateUI()" placeholder="輸入名稱">
+                </div>
+            </div>
+            <div class="grid-stats">
+                <div><label>等級</label><input type="number" data-f="lv" oninput="autoCalc()"></div>
+                <div style="grid-column: span 2;">
+                    <label>經驗值: <span id="expRatio">0/1000</span></label>
+                    <input type="number" data-f="exp" oninput="updateExp(this.value)">
+                    <div class="bar-bg"><div id="expBar" class="bar-fill exp-fill"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h3>狀態異常標記</h3>
+            <div class="status-grid">
+                <label class="status-item"><input type="checkbox" data-s="poison" onchange="updateUI()">中毒</label>
+                <label class="status-item"><input type="checkbox" data-s="burn" onchange="updateUI()">燒傷</label>
+                <label class="status-item"><input type="checkbox" data-s="freeze" onchange="updateUI()">凍結</label>
+                <label class="status-item"><input type="checkbox" data-s="stun" onchange="updateUI()">暈眩</label>
+                <label class="status-item"><input type="checkbox" data-s="bleed" onchange="updateUI()">流血</label>
+                <label class="status-item"><input type="checkbox" data-s="curse" onchange="updateUI()">詛咒</label>
+                <label class="status-item"><input type="checkbox" data-s="blind" onchange="updateUI()">失明</label>
+                <label class="status-item"><input type="checkbox" data-s="silence" onchange="updateUI()">沉默</label>
+                <label class="status-item"><input type="checkbox" data-s="confuse" onchange="updateUI()">混亂</label>
+                <label class="status-item"><input type="checkbox" data-s="stone" onchange="updateUI()">石化</label>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0;">核心數值</h3>
+                <button class="btn-max" onclick="recoverAll()">MAX 全恢復</button>
+            </div>
+            <div id="remainPointsBanner" class="section-card" style="padding:8px; text-align:center; background:rgba(0,0,0,0.2); margin-bottom:10px;">
+                <label style="margin:0;">可用剩餘點數</label>
+                <div id="remainPoints" style="font-size:1.5rem; font-weight:bold; color:var(--warning);">50</div>
+            </div>
+            <div class="grid-stats">
+                <div><label>HP <span id="maxHP_label"></span></label><input type="number" data-f="hp" oninput="updateBars()"></div>
+                <div><label>MP <span id="maxMP_label"></span></label><input type="number" data-f="mp" oninput="updateBars()"></div>
+                <div><label>SP <span id="maxSP_label"></span></label><input type="number" data-f="sp" oninput="updateBars()"></div>
+            </div>
+            <div class="bar-bg"><div id="hpBar" class="bar-fill hp-fill"></div></div>
+            <div class="bar-bg"><div id="mpBar" class="bar-fill mp-fill"></div></div>
+            <div class="bar-bg"><div id="spBar" class="bar-fill sp-fill"></div></div>
+            <div class="grid-stats" style="margin-top:10px;">
+                <div><label>攻擊力</label><input type="number" data-f="atk" oninput="calcPoints()"></div>
+                <div><label>魔法力</label><input type="number" data-f="mag" oninput="calcPoints()"></div>
+                <div><label>防禦力</label><input type="number" data-f="def" oninput="calcPoints()"></div>
+                <div><label>幸運</label><input type="number" data-f="luk" oninput="calcPoints()"></div>
+                <div><label>感知</label><input type="number" data-f="per" oninput="calcPoints()"></div>
+                <div><label>速度</label><input type="number" data-f="spd" oninput="calcPoints()"></div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="sub-tabs">
+                <div id="sub-tab-abilities" class="sub-tab active" onclick="showSubTab('abilities')">技能 (Skills)</div>
+                <div id="sub-tab-equips" class="sub-tab" onclick="showSubTab('equips')">背包 (Items)</div>
+                <div id="sub-tab-quests" class="sub-tab" onclick="showSubTab('quests')">任務 (Quests)</div>
+            </div>
+            <div id="sub-content-abilities" class="sub-content active">
+                <button onclick="addItem('abilities')" style="margin-bottom:10px; font-size:12px;">＋ 新增技能</button>
+                <div id="abilities-list"></div>
+            </div>
+            <div id="sub-content-equips" class="sub-content" style="display:none;">
+                <button onclick="addItem('equips')" style="margin-bottom:10px; font-size:12px;">＋ 新增裝備/道具</button>
+                <div id="equips-list"></div>
+            </div>
+            <div id="sub-content-quests" class="sub-content" style="display:none;">
+                <button onclick="addQuest()" style="margin-bottom:10px; font-size:12px;">＋ 新增任務進度</button>
+                <div id="quest-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="content-world" class="tab-content">
+        <div class="section-card">
+            <h3>大世界紀錄</h3>
+            <textarea id="worldSetting" rows="20" oninput="db.worldContent=this.value;save()"></textarea>
+        </div>
+    </div>
+
+    <div id="content-ai" class="tab-content">
+        <div class="section-card">
+            <div id="ai-chat-box"></div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="ai-input" placeholder="說點什麼或進行行動..." onkeypress="if(event.key==='Enter') sendToAI()">
+                <button onclick="sendToAI()" style="background:var(--accent); color:#000; font-weight:bold; border:none; padding:10px 20px;">發送</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="content-tools" class="tab-content">
+        <div class="section-card">
+            <h3>畫面配色</h3>
+            <div class="theme-picker">
+                <div class="theme-dot" style="background:#0f172a;" onclick="setTheme('default')"></div>
+                <div class="theme-dot" style="background:#064e3b;" onclick="setTheme('forest')"></div>
+                <div class="theme-dot" style="background:#450a0a;" onclick="setTheme('fire')"></div>
+                <div class="theme-dot" style="background:#2e1065;" onclick="setTheme('void')"></div>
+            </div>
+        </div>
+        <div class="section-card">
+            <h3>存檔管理</h3>
+            <button id="manualSaveBtn" class="btn-full btn-success" onclick="manualSave()">💾 立即儲存當前紀錄</button>
+            <button class="btn-full" onclick="exportWorldWord()">📄 匯出世界觀 (.doc)</button>
+            <button class="btn-full btn-danger" onclick="clearChat()">🗑️ 刪除所有對話內容</button>
+        </div>
+        <div class="section-card">
+            <h3>角色匯出</h3>
+            <button class="btn-full" onclick="exportCharWord()">匯出當前角色 (.doc)</button>
+            <button class="btn-full" onclick="exportAllCharsWord()">匯出所有角色 (.doc)</button>
+        </div>
+        <div class="section-card">
+            <h3>系統與備份</h3>
+            <button class="btn-full btn-success" onclick="exportJSON()">下載備份 (JSON)</button>
+            <button class="btn-full btn-danger" onclick="importJSON()">匯入備份 (JSON)</button>
+            <button class="btn-full btn-danger" style="margin-top:20px" onclick="deleteChar()">永久刪除此角色</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const DB_KEY = "rpg_v11_balanced";
+const STATUS_MAP = { poison: "🧪", burn: "🔥", freeze: "❄️", stun: "💫", bleed: "🩸", curse: "💀", blind: "🕶️", silence: "🔇", confuse: "🌀", stone: "🗿" };
+const THEMES = {
+    default: { bg: "#0f172a", card: "#1e293b", border: "#334155", accent: "#38bdf8" },
+    forest: { bg: "#064e3b", card: "#065f46", border: "#047857", accent: "#34d399" },
+    fire: { bg: "#450a0a", card: "#7f1d1d", border: "#991b1b", accent: "#f87171" },
+    void: { bg: "#2e1065", card: "#4c1d95", border: "#5b21b6", accent: "#a78bfa" }
+};
+
+let db = JSON.parse(localStorage.getItem(DB_KEY)) || {
+    currentId: 0, list: [createEmptyChar("新角色")], worldContent: "", theme: "default", chatLog: []
+};
+if (!db.chatLog) db.chatLog = [];
+
+function createEmptyChar(name) {
+    return { 
+        id: Date.now(), name, lv: 1, exp: "", 
+        hp: "", mp: "", sp: "", atk: "", mag: "", def: "", luk: "", per: "", spd: "", 
+        statuses: {}, abilities: [], equips: [], quests: [], avatar: "" 
+    };
+}
+
+function save() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function getCur() { return db.list[db.currentId]; }
+
+function setTheme(key) {
+    db.theme = key;
+    const t = THEMES[key];
+    document.getElementById('theme-style').innerHTML = `:root { --bg: ${t.bg}; --card-bg: ${t.card}; --border: ${t.border}; --accent: ${t.accent}; --danger: #f87171; --success: #4ade80; --text: #f1f5f9; --text-muted: #94a3b8; --warning: #fbbf24; --hp: #f87171; --mp: #60a5fa; --sp: #34d399; }`;
+    save();
+}
+
+function showTab(t) { 
+    document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active')); 
+    const tabs = document.querySelectorAll('.tab');
+    if (t === 'chars') tabs[0].classList.add('active');
+    else if (t === 'world') tabs[1].classList.add('active');
+    else if (t === 'ai') tabs[2].classList.add('active');
+    else if (t === 'tools') tabs[3].classList.add('active');
+    document.getElementById('content-' + t).classList.add('active'); 
+}
+
+function showSubTab(type) { 
+    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active')); 
+    document.querySelectorAll('.sub-content').forEach(c => c.style.display = 'none'); 
+    document.getElementById('sub-tab-' + type).classList.add('active'); 
+    document.getElementById('sub-content-' + type).style.display = 'block'; 
+}
+
+// --- 渲染聊天紀錄 ---
+function renderChat() {
+    const box = document.getElementById('ai-chat-box');
+    if (db.chatLog.length === 0) {
+        box.innerHTML = '<div class="ai-msg">你好，我是你的 AI GM。我已經讀取了你的角色資訊與世界背景，隨時可以開始冒險。</div>';
+        return;
+    }
+    box.innerHTML = db.chatLog.map((m, i) => `
+        <div class="${m.role}-msg">
+            <div contenteditable="true" onblur="editChat(${i}, this.innerText)">${m.content}</div>
+            ${m.role === 'user' ? `<button class="resend-btn" onclick="reSend(${i})">重新對話</button>` : ''}
+        </div>
+    `).join('');
+    box.scrollTop = box.scrollHeight;
+}
+
+function editChat(index, text) {
+    db.chatLog[index].content = text;
+    save();
+}
+
+function clearChat() {
+    if (confirm("確定刪除所有對話內容嗎？")) {
+        db.chatLog = [];
+        save();
+        renderChat();
+    }
+}
+
+async function reSend(index) {
+    const text = db.chatLog[index].content;
+    db.chatLog = db.chatLog.slice(0, index); // 刪除該條之後的所有紀錄
+    await sendToAI(text);
+}
+
+// --- AI 核心對話邏輯 ---
+async function sendToAI(forcedInput = null) {
+    const input = document.getElementById('ai-input');
+    const msg = forcedInput || input.value.trim();
+    if (!msg) return;
+
+    db.chatLog.push({ role: 'user', content: msg });
+    if (!forcedInput) input.value = "";
+    renderChat();
+
+    try {
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${AI_SETTINGS.apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: AI_SETTINGS.model,
+                messages: [
+                    { role: "system", content: AI_SETTINGS.getSystemPrompt(db, getCur()) },
+                    ...db.chatLog.slice(-6) // 發送最近6條紀錄
+                ],
+                temperature: AI_SETTINGS.temperature
+            })
+        });
+
+        const data = await response.json();
+        const aiResult = data.choices[0].message.content;
+        const cur = getCur();
+
+        // --- 自動化變更邏輯 ---
+        const statMatches = aiResult.matchAll(/\[(HP|MP|SP|EXP)([+-]\d+)\]/gi);
+        for (const m of statMatches) {
+            const key = m[1].toLowerCase();
+            const val = parseInt(m[2]);
+            if (key === 'exp') {
+                cur.exp = (parseInt(cur.exp) || 0) + val;
+            } else {
+                cur[key] = Math.max(0, Math.min(cur['max' + key.toUpperCase()], (parseInt(cur[key]) || 0) + val));
+            }
+        }
+
+        const statusMatch = aiResult.match(/\[STATUS:(.*?),(\w+)\]/i);
+        if (statusMatch) {
+            const sNameMap = { "中毒":"poison", "燒傷":"burn", "凍結":"freeze", "暈眩":"stun", "流血":"bleed", "詛咒":"curse", "失明":"blind", "沉默":"silence", "混亂":"confuse", "石化":"stone" };
+            const statusKey = sNameMap[statusMatch[1].trim()];
+            if (statusKey) cur.statuses[statusKey] = (statusMatch[2].trim().toLowerCase() === 'true');
+        }
+
+        const questMatch = aiResult.match(/\[QUEST:(.*?),([+-]\d+)\]/);
+        if (questMatch && cur.quests) {
+            const q = cur.quests.find(x => x.n.includes(questMatch[1]));
+            if (q) q.cur = Math.max(0, Math.min(q.tar, q.cur + parseInt(questMatch[2])));
+        }
+
+        // 存入 AI 回覆 (過濾標籤)
+        const cleanMsg = aiResult.replace(/\[.*?\]/g, "").trim();
+        db.chatLog.push({ role: 'ai', content: cleanMsg });
+        
+        save();
+        init(); // 重新載入所有數據到畫面並重新渲染聊天室
+        
+    } catch (e) {
+        alert("連連失敗：" + e.message);
+    }
+}
+
+// --- 以下保留功能邏輯 ---
+
+function updateExp(val) { const cur = getCur(); cur.exp = val; const max = cur.maxExp || 1000; document.getElementById('expBar').style.width = Math.min(100, (val / max * 100)) + "%"; document.getElementById('expRatio').textContent = `${val || 0} / ${max}`; save(); }
+
+function updateUI() {
+    const cur = getCur(); const nameInput = document.querySelector('[data-f="name"]');
+    const name = nameInput ? nameInput.value : cur.name;
+    cur.name = name;
+    let activeEmojis = "";
+    document.querySelectorAll('[data-s]').forEach(cb => {
+        const sKey = cb.dataset.s; cur.statuses[sKey] = cb.checked;
+        if(cb.checked) activeEmojis += STATUS_MAP[sKey] || "";
+    });
+    document.getElementById('displayName').textContent = name;
+    document.getElementById('status-emojis').textContent = activeEmojis;
+    const select = document.getElementById('charSelect');
+    if(select.options[db.currentId]) select.options[db.currentId].text = name;
+    save();
+}
+
+function calcPoints() {
+    const cur = getCur(); const lv = parseInt(cur.lv) || 1;
+    let total = 50; for (let i = 2; i <= lv; i++) { if (i <= 10) total += 5; else if (i <= 20) total += 10; else total += 20; }
+    const stats = ['atk', 'mag', 'def', 'luk', 'per', 'spd'];
+    let used = 0;
+    stats.forEach(s => { const input = document.querySelector(`[data-f="${s}"]`); if(input){ const val = parseInt(input.value) || 0; cur[s] = input.value; used += val; }});
+    const remain = total - used; const el = document.getElementById('remainPoints'); el.textContent = remain; el.className = remain < 0 ? 'over-points' : '';
+    save();
+}
+
+function autoCalc() {
+    const cur = getCur(); const lvInput = document.querySelector('[data-f="lv"]'); const lv = parseInt(lvInput.value) || 1;
+    cur.lv = lv; cur.maxExp = lv * 1000 + (lv-1)*500; cur.maxHP = lv * 20 + 100; cur.maxMP = lv * 10 + 50; cur.maxSP = lv * 10 + 50;
+    if(!cur.hp) { cur.hp = cur.maxHP; document.querySelector('[data-f="hp"]').value = cur.hp; }
+    if(!cur.mp) { cur.mp = cur.maxMP; document.querySelector('[data-f="mp"]').value = cur.mp; }
+    if(!cur.sp) { cur.sp = cur.maxSP; document.querySelector('[data-f="sp"]').value = cur.sp; }
+    document.getElementById('maxHP_label').textContent = "/ " + cur.maxHP;
+    document.getElementById('maxMP_label').textContent = "/ " + cur.maxMP;
+    document.getElementById('maxSP_label').textContent = "/ " + cur.maxSP;
+    updateExp(cur.exp); updateBars(); calcPoints();
+}
+
+function updateBars() {
+    const cur = getCur(); ['hp', 'mp', 'sp'].forEach(f => { const input = document.querySelector(`[data-f="${f}"]`); if(input){ const val = input.value; cur[f] = val; const max = cur['max' + f.toUpperCase()]; document.getElementById(f + 'Bar').style.width = (max && val) ? Math.min(100, (val / max * 100)) + "%" : "0%"; }});
+    save();
+}
+
+function recoverAll() { const cur = getCur(); cur.hp = cur.maxHP; cur.mp = cur.maxMP; cur.sp = cur.maxSP; document.querySelector('[data-f="hp"]').value = cur.hp; document.querySelector('[data-f="mp"]').value = cur.mp; document.querySelector('[data-f="sp"]').value = cur.sp; updateBars(); save(); }
+
+function renderList(type) {
+    const container = document.getElementById(`${type}-list`);
+    if(!container) return;
+    container.innerHTML = (getCur()[type] || []).map((item, i) => `<div class="list-item"><input style="flex:2" placeholder="名稱" value="${item.n||''}" oninput="getCur().${type}[${i}].n=this.value;save()">${type==='abilities' ? `<input type="number" style="flex:1" placeholder="MP" value="${item.mp||''}" oninput="getCur().${type}[${i}].mp=this.value;save()">` : ''}<textarea style="flex:100%; margin-top:5px;" rows="1" oninput="getCur().${type}[${i}].e=this.value;save()">${item.e||''}</textarea><button class="btn-danger" style="padding:2px 8px; font-size:10px;" onclick="getCur().${type}.splice(${i},1);renderList('${type}');save()">✕ 刪除</button></div>`).join('');
+}
+
+function addItem(type) { getCur()[type].push({n:"", e:"", mp:""}); renderList(type); save(); }
+
+function renderQuests() {
+    const container = document.getElementById('quest-list');
+    const cur = getCur(); if(!cur.quests) cur.quests = [];
+    container.innerHTML = cur.quests.map((q, i) => `
+        <div class="list-item" style="border-left: 4px solid ${q.cur >= q.tar ? 'var(--success)' : 'var(--warning)'}">
+            <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                <input style="flex:2; border:none; background:transparent; font-weight:bold; color:var(--accent);" value="${q.n}" oninput="getCur().quests[${i}].n=this.value;save()">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <input type="number" style="width:45px; padding:2px; text-align:center;" value="${q.cur}" oninput="getCur().quests[${i}].cur=parseInt(this.value);renderQuests();save()">
+                    <span style="color:var(--text-muted)">/</span>
+                    <input type="number" style="width:45px; padding:2px; text-align:center;" value="${q.tar}" oninput="getCur().quests[${i}].tar=parseInt(this.value);renderQuests();save()">
+                </div>
+            </div>
+            <div class="bar-bg" style="height:4px; margin:8px 0;"><div class="bar-fill" style="width:${Math.min(100, (q.cur/q.tar)*100)}%; background:var(--warning)"></div></div>
+            <button class="btn-danger" style="padding:2px 8px; font-size:10px;" onclick="getCur().quests.splice(${i},1);renderQuests();save()">✕ 刪除任務</button>
+        </div>`).join('');
+}
+function addQuest() { if(!getCur().quests) getCur().quests = []; getCur().quests.push({n: "新任務", cur: 0, tar: 3}); renderQuests(); save(); }
+
+function manualSave() { save(); const btn = document.getElementById('manualSaveBtn'); btn.classList.add('save-active'); setTimeout(() => btn.classList.remove('save-active'), 1000); }
+function switchCharacter(i) { db.currentId = i; init(); }
+function addNewCharacter() { db.list.push(createEmptyChar("新角色")); db.currentId = db.list.length-1; init(); }
+function deleteChar() { if(confirm("確定刪除此角色？")) { db.list.splice(db.currentId, 1); if(db.list.length==0) db.list.push(createEmptyChar("新角色")); db.currentId=0; init(); } }
+
+function renderAvatar() { const img = document.getElementById('charAvatar'); const hint = document.getElementById('avatarHint'); if(getCur().avatar) { img.src = getCur().avatar; img.style.display = "block"; hint.style.display = "none"; } else { img.style.display="none"; hint.style.display="block"; } }
+function uploadAvatar(input) { const reader = new FileReader(); reader.onload = e => { getCur().avatar = e.target.result; renderAvatar(); save(); }; reader.readAsDataURL(input.files[0]); }
+
+function init() {
+    const select = document.getElementById('charSelect');
+    select.innerHTML = db.list.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
+    select.value = db.currentId;
+    const cur = getCur();
+    document.querySelectorAll("[data-f]").forEach(el => el.value = cur[el.dataset.f] ?? "");
+    document.querySelectorAll("[data-s]").forEach(cb => cb.checked = cur.statuses[cb.dataset.s] || false);
+    document.getElementById('worldSetting').value = db.worldContent || "";
+    setTheme(db.theme || 'default');
+    renderAvatar(); autoCalc(); updateUI(); renderList('abilities'); renderList('equips'); renderQuests(); renderChat();
+}
+
+init();
+</script>
+</body>
+</html>
